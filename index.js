@@ -1,3 +1,4 @@
 const mqtt = require("./mqtt");
+const websocket = require("./websocket");
 
-mqtt.run();
+mqtt.run(websocket.run);

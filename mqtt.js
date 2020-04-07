@@ -17,9 +17,13 @@ const options = {
 
 var client;
 
-function run() {
+/**
+ *
+ * @param {void} cb callback after connect and subscribed
+ */
+function run(cb) {
   client = mqtt.connect(HOST, options);
-  client.on("connect", onConnect);
+  client.on("connect", () => onConnect(cb));
   client.on("reconnect", onReconnect);
   client.on("error", onError);
   client.on("close", onClose);
@@ -30,10 +34,21 @@ function onReconnect() {
   mqtt.connect(HOST, options);
 }
 
-function onConnect() {
+/**
+ *
+ * @param {void} cb callback after connect and subscribed
+ */
+function onConnect(cb) {
   client.subscribe(TOPICS, (error) => {
     console.log("MQTT subscribing topics");
-    return console.log(error ? error : "MQTT succes subscribe");
+    if (error) {
+      console.log(error);
+    } else if (cb) {
+      console.log("MQTT succes subscribe");
+      cb();
+    } else {
+      console.log("MQTT succes subscribe");
+    }
   });
 }
 
@@ -46,26 +61,10 @@ function onClose() {
 }
 
 function onMessage(topic, payload) {
-  console.log("Message arrived", topic);
+  console.log("Message arrived", topic, payload.toString());
 
   let body;
   switch (topic) {
-    case TOPICS[0]:
-      body = {
-        key: "solenoid",
-        value_decimal: 1,
-      };
-      put("settings", body);
-      break;
-
-    case TOPICS[1]:
-      body = {
-        key: "solenoid",
-        value_decimal: 0,
-      };
-      put("settings", body);
-      break;
-
     case TOPICS[2]:
       try {
         payload = JSON.parse(payload.toString());
@@ -94,11 +93,37 @@ function onMessage(topic, payload) {
       });
       break;
 
+    // case TOPICS[0]:
+    //   body = {
+    //     key: "solenoid",
+    //     value_decimal: 1,
+    //   };
+    //   put("settings", body);
+    //   break;
+
+    // case TOPICS[1]:
+    //   body = {
+    //     key: "solenoid",
+    //     value_decimal: 0,
+    //   };
+    //   put("settings", body);
+    //   break;
+
     default:
       break;
   }
 }
 
+/**
+ *
+ * @param {string} topic
+ * @param {string} payload
+ */
+function clientPublish(topic, payload) {
+  client.publish(topic, payload);
+}
+
 module.exports = {
   run: run,
+  clientPublish: clientPublish,
 };
