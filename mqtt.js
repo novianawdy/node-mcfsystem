@@ -1,13 +1,15 @@
 const mqtt = require("mqtt");
-const { get, post, put } = require("./helper");
+const { get, post } = require("./helper");
+const RequestBody = require("./RequestBody");
 
 const HOST = `mqtt://34.70.45.52`;
 const TOPICS = [
-  "/solenoid/on",
-  "/solenoid/off",
-  "/flow/monitor",
-  "/get/setting",
-  "/set/setting",
+  "/solenoid/on", // 0
+  "/solenoid/off", // 1
+  "/flow/monitor", // 2
+  "/get/setting", // 3
+  "/set/setting", // 4
+  "monitoring", // 5
 ];
 
 const options = {
@@ -15,7 +17,15 @@ const options = {
   port: 1883,
 };
 
-var client;
+/**
+ * @type {mqtt.Client}
+ */
+let client;
+
+/**
+ * @type {RequestBody}
+ */
+let request;
 
 /**
  *
@@ -28,6 +38,20 @@ function run(cb) {
   client.on("error", onError);
   client.on("close", onClose);
   client.on("message", onMessage);
+
+  get("settings?serialized=1", (response) => {
+    //   ketika success get publish response
+    if (response && response.status === "success") {
+      let message = {};
+      try {
+        message = response.result.setting;
+      } catch (e) {
+        console.log(e);
+      }
+
+      request = new RequestBody(0, message.fake_temperature, message.solenoid);
+    }
+  });
 }
 
 function onReconnect() {
@@ -63,15 +87,15 @@ function onClose() {
 function onMessage(topic, payload) {
   console.log("Message arrived", topic, payload.toString());
 
-  let body;
   switch (topic) {
     case TOPICS[2]:
       try {
-        payload = JSON.parse(payload.toString());
+        payload = parseFloat(payload.toString());
 
-        const { flow, temperature, solenoid } = payload;
-        body = { flow, temperature, solenoid };
-        post("logs", body);
+        request.flow = payload;
+        console.log("set flow", JSON.stringify(request.body));
+        client.publish("monitoring", JSON.stringify(request.body));
+        post("logs", request.body);
       } catch (e) {
         console.log(e);
       }
@@ -93,22 +117,6 @@ function onMessage(topic, payload) {
       });
       break;
 
-    // case TOPICS[0]:
-    //   body = {
-    //     key: "solenoid",
-    //     value_decimal: 1,
-    //   };
-    //   put("settings", body);
-    //   break;
-
-    // case TOPICS[1]:
-    //   body = {
-    //     key: "solenoid",
-    //     value_decimal: 0,
-    //   };
-    //   put("settings", body);
-    //   break;
-
     default:
       break;
   }
@@ -120,10 +128,23 @@ function onMessage(topic, payload) {
  * @param {string} payload
  */
 function clientPublish(topic, payload) {
-  client.publish(topic, payload);
+  return client.publish(topic, payload);
+}
+
+/**
+ *
+ * @param {string | number} temperature
+ * @param {string | number} solenoid
+ */
+function setRequest(temperature, solenoid) {
+  request.temperature = temperature;
+  request.solenoid = solenoid;
+
+  return request.body;
 }
 
 module.exports = {
   run: run,
   clientPublish: clientPublish,
+  setRequest: setRequest,
 };
