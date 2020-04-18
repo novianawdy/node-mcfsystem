@@ -86,6 +86,12 @@ function formatEvent(data) {
       myMqtt.clientPublish(solenoidTopic, solenoidMessage);
       break;
 
+    // Temperature Change
+    case 6:
+      setting = payload.setting_serialized;
+      myMqtt.setRequest(setting.fake_temperature, setting.solenoid);
+      break;
+
     default:
       break;
   }
