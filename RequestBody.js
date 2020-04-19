@@ -6,7 +6,11 @@ class RequestBody {
    *   solenoid: string | number
    *  }}
    */
-  _body = {};
+  _body = {
+    flow: 0,
+    temperature: 0,
+    solenoid: 0,
+  };
 
   /**
    *
