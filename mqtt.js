@@ -93,28 +93,11 @@ function onMessage(topic, payload) {
         payload = parseFloat(payload.toString());
 
         request.flow = payload;
-        console.log("set flow", JSON.stringify(request.body));
         client.publish("monitoring", JSON.stringify(request.body));
-        post("logs", request.body);
+        post("logs", request.body, (r) => console.log("POST", r));
       } catch (e) {
         console.log(e);
       }
-      break;
-
-    case TOPICS[3]:
-      get("settings?serialized=1", (response) => {
-        //   ketika success get publish response
-        if (response && response.status === "success") {
-          let message = {};
-          try {
-            message = JSON.stringify(response.result.setting);
-          } catch (e) {
-            console.log(e);
-          }
-
-          client.publish("/set/setting", message);
-        }
-      });
       break;
 
     default:
