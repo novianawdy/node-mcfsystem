@@ -10,6 +10,7 @@ const TOPICS = [
   "/get/setting", // 3
   "/set/setting", // 4
   "monitoring", // 5
+  "/solenoid", // 6
 ];
 
 const options = {

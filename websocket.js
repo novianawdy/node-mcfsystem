@@ -75,13 +75,12 @@ function formatEvent(data) {
       setting = payload.setting_serialized;
       myMqtt.setRequest(setting.fake_temperature, setting.solenoid);
 
-      let solenoidTopic, solenoidMessage;
+      let solenoidTopic = "/solenoid";
+      let solenoidMessage;
       if (parseFloat(setting.solenoid) === 1) {
-        solenoidTopic = "/solenoid/on";
-        solenoidMessage = "ON";
+        solenoidMessage = "1";
       } else {
-        solenoidTopic = "/solenoid/off";
-        solenoidMessage = "OFF";
+        solenoidMessage = "0";
       }
       myMqtt.clientPublish(solenoidTopic, solenoidMessage);
       break;
